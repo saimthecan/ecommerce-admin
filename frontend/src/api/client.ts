@@ -8,3 +8,15 @@ export const apiClient = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// ---- TOKEN INTERCEPTOR ----
+apiClient.interceptors.request.use((config) => {
+  const auth = localStorage.getItem("auth");
+  if (auth) {
+    const parsed = JSON.parse(auth);
+    if (parsed.token) {
+      config.headers.Authorization = `Bearer ${parsed.token}`;
+    }
+  }
+  return config;
+});
