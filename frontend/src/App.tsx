@@ -2,8 +2,10 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Overview from "./pages/Overview";
 import Users from "./pages/Users";
+import Products from "./pages/Products";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
+import AdminLayout from "./layouts/AdminLayout";
 
 function App() {
   return (
@@ -13,8 +15,11 @@ function App() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/overview" element={<Overview />} />
-        <Route path="/users" element={<Users />} />
+        <Route element={<AdminLayout />}>
+          <Route path="/overview" element={<Overview />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/products" element={<Products />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/overview" replace />} />

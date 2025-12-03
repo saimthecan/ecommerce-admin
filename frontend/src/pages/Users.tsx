@@ -1,4 +1,3 @@
-// src/pages/Users.tsx
 import { useEffect, useState, FormEvent } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import {
@@ -10,23 +9,24 @@ import {
   selectUsersError,
   type User,
 } from "../features/users/usersSlice";
+import { selectCurrentUser } from "../features/auth/authSlice";
 
 const Users = () => {
   const dispatch = useAppDispatch();
   const users = useAppSelector(selectUsers);
   const status = useAppSelector(selectUsersStatus);
   const error = useAppSelector(selectUsersError);
+  const currentUser = useAppSelector(selectCurrentUser);
 
-  // yeni kullanıcı form state’i
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
 
   useEffect(() => {
-    if (status === "idle") {
+    if (status === "idle" && currentUser?.is_superuser) {
       dispatch(fetchUsers());
     }
-  }, [status, dispatch]);
+  }, [status, dispatch, currentUser]);
 
   const handleCreateUser = async (e: FormEvent) => {
     e.preventDefault();
@@ -65,6 +65,16 @@ const Users = () => {
     );
   };
 
+  // 🔒 Admin değilse erken return
+  if (!currentUser?.is_superuser) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        Bu sayfa yalnızca <strong>admin</strong> kullanıcılar tarafından
+        görüntülenebilir.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -74,7 +84,7 @@ const Users = () => {
         </p>
       </div>
 
-      {/* Yeni kullanıcı formu */}
+      {/* Yeni kullanıcı formu – sadece admin zaten buraya gelebiliyor */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <h3 className="mb-3 text-sm font-semibold text-slate-800">
           Yeni Kullanıcı Ekle
@@ -133,9 +143,7 @@ const Users = () => {
           </div>
         </form>
         {error && (
-          <p className="mt-2 text-xs text-red-600">
-            Hata: {error}
-          </p>
+          <p className="mt-2 text-xs text-red-600">Hata: {error}</p>
         )}
       </div>
 
