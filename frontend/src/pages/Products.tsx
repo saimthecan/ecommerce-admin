@@ -11,6 +11,10 @@ import {
   type Product,
 } from "../features/products/productsSlice";
 import { selectCurrentUser } from "../features/auth/authSlice";
+import {
+  fetchCategories,
+  selectCategories,
+} from "../features/categories/categoriesSlice";
 
 const Products = () => {
   const dispatch = useAppDispatch();
@@ -18,11 +22,13 @@ const Products = () => {
   const status = useAppSelector(selectProductsStatus);
   const error = useAppSelector(selectProductsError);
   const currentUser = useAppSelector(selectCurrentUser);
+  const categories = useAppSelector(selectCategories);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState<string>("0");
   const [stock, setStock] = useState<string>("0");
   const [description, setDescription] = useState("");
+  const [categoryId, setCategoryId] = useState<string>("");
 
   // Sayfa açılınca ürünleri çek
   useEffect(() => {
@@ -30,6 +36,12 @@ const Products = () => {
       dispatch(fetchProducts());
     }
   }, [status, dispatch, currentUser]);
+
+  useEffect(() => {
+    if (currentUser?.is_superuser) {
+      dispatch(fetchCategories());
+    }
+  }, [dispatch, currentUser]);
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
@@ -45,7 +57,7 @@ const Products = () => {
         price: parsedPrice,
         stock: parsedStock,
         is_active: true,
-        category_id: null,
+        category_id: categoryId || null,
       })
     );
 
@@ -54,6 +66,7 @@ const Products = () => {
       setPrice("0");
       setStock("0");
       setDescription("");
+      setCategoryId("");
     }
   };
 
@@ -114,31 +127,52 @@ const Products = () => {
           </div>
           <div>
             <label
-              htmlFor="price" 
+              htmlFor="category-select"
+              className="block text-xs font-medium text-slate-600 mb-1"
+            >
+              Kategori
+            </label>
+            <select
+              id="category-select"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+            >
+              <option value="">Kategori seçme</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="price"
               className="block text-xs font-medium text-slate-600 mb-1"
             >
               Fiyat
             </label>
             <input
-              id="price" 
+              id="price"
               type="number"
               step="0.01"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               required
-              placeholder="0.00" 
+              placeholder="0.00"
             />
           </div>
           <div>
             <label
-              htmlFor="stock" 
+              htmlFor="stock"
               className="block text-xs font-medium text-slate-600 mb-1"
             >
               Stok
             </label>
             <input
-              id="stock" 
+              id="stock"
               type="number"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               value={stock}
@@ -196,6 +230,7 @@ const Products = () => {
                 <th className="px-4 py-3">Durum</th>
                 <th className="px-4 py-3">Açıklama</th>
                 <th className="px-4 py-3 text-right">İşlemler</th>
+                <th className="px-4 py-3">Kategori</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -225,6 +260,7 @@ const Products = () => {
                   <td className="px-4 py-2 text-xs text-slate-600">
                     {p.description ?? "-"}
                   </td>
+
                   <td className="px-4 py-2 text-right space-x-2">
                     <button
                       type="button"
@@ -234,13 +270,20 @@ const Products = () => {
                       Sil
                     </button>
                   </td>
+
+                  <td className="px-4 py-2 text-xs text-slate-600">
+                    {p.category_id
+                      ? categories.find((c) => c.id === p.category_id)?.name ??
+                        p.category_id
+                      : "-"}
+                  </td>
                 </tr>
               ))}
 
               {products.length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-6 text-center text-sm text-slate-500"
                   >
                     Henüz ürün bulunmuyor.
