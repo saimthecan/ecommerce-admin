@@ -60,7 +60,22 @@ const AdminLayout = () => {
           >
             Ürünler
           </NavLink>
+
+          
+        <NavLink
+            to="/categories"
+            className={({ isActive }) =>
+              `block rounded-md px-3 py-2 ${
+                isActive
+                  ? "bg-slate-800 text-white"
+                  : "text-slate-200 hover:bg-slate-800/60"
+              }`
+            }
+          >
+            Kategoriler
+          </NavLink>
         </nav>
+
 
         <div className="border-t border-slate-800 px-4 py-3 text-xs text-slate-300">
           {user && (

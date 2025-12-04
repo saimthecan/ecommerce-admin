@@ -16,10 +16,11 @@ const DashboardLayout = () => {
     navigate("/login", { replace: true });
   };
 
-  const navItems = [
+const navItems = [
     { path: "/overview", label: "Overview" },
-    { path: "/users", label: "Users (gelecek)" },
-    { path: "/products", label: "Products (gelecek)" },
+    { path: "/users", label: "Users" },
+    { path: "/products", label: "Products" },
+    { path: "/categories", label: "Categories" }, 
     { path: "/orders", label: "Orders (gelecek)" },
   ];
 
