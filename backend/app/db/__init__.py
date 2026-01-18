@@ -1,6 +1,5 @@
-
-from app.models.category import Category
-from app.models.product import Product
-
+# app/db/__init__.py
 from app.db.base import Base
 from app.db.session import engine, async_session_maker, get_db
+
+__all__ = ["Base", "engine", "async_session_maker", "get_db"]

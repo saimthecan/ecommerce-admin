@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,7 +47,7 @@ async def create_category_endpoint(
 
 @router.put("/{category_id}", response_model=CategoryOut)
 async def update_category_endpoint(
-    category_id: str,
+    category_id: UUID,
     body: CategoryUpdate,
     db: AsyncSession = Depends(get_db_session),
     current_user: UserModel = Depends(get_current_active_user),
@@ -62,7 +63,7 @@ async def update_category_endpoint(
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category_endpoint(
-    category_id: str,
+    category_id: UUID,
     db: AsyncSession = Depends(get_db_session),
     current_user: UserModel = Depends(get_current_active_user),
 ):

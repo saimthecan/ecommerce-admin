@@ -1,3 +1,4 @@
+# app/db/init_db.py
 import asyncio
 
 from sqlalchemy import select
@@ -5,11 +6,14 @@ from sqlalchemy import select
 from app.db.base import Base
 from app.db.session import engine, async_session_maker
 from app.models.user import User
+from app.models.product import Product
+from app.models.category import Category
+from app.models.order import Order, OrderItem  # Order modelin olduğunda EKLE
 from app.core.security import get_password_hash
 
 
 async def init_db():
-    # 1) Tabloları oluştur (users dahil)
+    # 1) Tabloları oluştur (tüm modeller Base'e bağlı olmalı)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

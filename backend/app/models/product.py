@@ -1,4 +1,4 @@
-from uuid import uuid4
+import uuid
 
 from sqlalchemy import (
     Column,
@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Numeric,
 )
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -19,9 +20,9 @@ class Product(Base):
     __tablename__ = "products"
 
     id = Column(
-        String(36),
+        UUID(as_uuid=True),
         primary_key=True,
-        default=lambda: str(uuid4()),
+        default=uuid.uuid4,
         index=True,
     )
 
@@ -39,7 +40,7 @@ class Product(Base):
 
     # Kategori ilişkisi (opsiyonel)
     category_id = Column(
-        String(36),
+        UUID(as_uuid=True),
         ForeignKey("categories.id", ondelete="SET NULL"),
         nullable=True,
     )

@@ -1,7 +1,7 @@
-from uuid import uuid4
+import uuid
 
 from sqlalchemy import Column, String, DateTime
-from sqlalchemy.dialects.sqlite import BLOB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
 from app.db.base import Base
@@ -10,12 +10,10 @@ from app.db.base import Base
 class Category(Base):
     __tablename__ = "categories"
 
-    # SQLite'ta UUID için BLOB ya da TEXT kullanabiliriz.
-    # User modelinde ne kullandıysan aynısını tercih et.
     id = Column(
-        String(36),  # SQLite için pratik çözüm: UUID'i string olarak tutuyoruz
+        UUID(as_uuid=True),
         primary_key=True,
-        default=lambda: str(uuid4()),
+        default=uuid.uuid4,
         index=True,
     )
 

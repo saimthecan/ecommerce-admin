@@ -13,7 +13,7 @@ async def get_categories(db: AsyncSession):
     return result.scalars().all()
 
 
-async def get_category(db: AsyncSession, category_id: str):
+async def get_category(db: AsyncSession, category_id: UUID):
     result = await db.execute(
         select(Category).where(Category.id == category_id)
     )

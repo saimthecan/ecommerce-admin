@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,7 +41,7 @@ async def create_product_endpoint(
 
 @router.get("/{product_id}", response_model=ProductOut)
 async def get_product_by_id(
-    product_id: str,
+    product_id: UUID,
     db: AsyncSession = Depends(get_db_session),
     current_user: ProductModel = Depends(get_current_active_admin),
 ):
@@ -55,7 +56,7 @@ async def get_product_by_id(
 
 @router.put("/{product_id}", response_model=ProductOut)
 async def update_product_endpoint(
-    product_id: str,
+    product_id: UUID,
     product_in: ProductUpdate,
     db: AsyncSession = Depends(get_db_session),
     current_user: ProductModel = Depends(get_current_active_admin),
@@ -73,7 +74,7 @@ async def update_product_endpoint(
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_product_endpoint(
-    product_id: str,
+    product_id: UUID,
     db: AsyncSession = Depends(get_db_session),
     current_user: ProductModel = Depends(get_current_active_admin),
 ):

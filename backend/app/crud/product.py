@@ -1,4 +1,5 @@
 from typing import Sequence
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +8,7 @@ from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductUpdate
 
 
-async def get_product(db: AsyncSession, product_id: str) -> Product | None:
+async def get_product(db: AsyncSession, product_id: UUID) -> Product | None:
     return await db.get(Product, product_id)
 
 

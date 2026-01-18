@@ -5,4 +5,4 @@ asyncpg
 python-jose[cryptography]
 passlib
 pydantic-settings
-aiosqlite
+email-validator

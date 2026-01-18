@@ -1,0 +1,21 @@
+# SQLite database (Neon'a geçiş sonrası gereksiz)
+backend/*.db
+*.db
+
+# Environment files (secrets içerir)
+backend/.env
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Node
+node_modules/
+dist/
