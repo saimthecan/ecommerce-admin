@@ -8,6 +8,7 @@ import {
   selectAuthStatus,
 } from "../features/auth/authSlice";
 
+const API_ORIGIN = import.meta.env.VITE_API_URL ?? window.location.origin;
 const Login = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -52,7 +53,8 @@ const Login = () => {
     setWarmupSuccess(false);
 
     try {
-      const response = await fetch("/api/warmup", {
+      const warmupUrl = `${API_ORIGIN.replace(/\/+$/, "")}/api/warmup`;
+      const response = await fetch(warmupUrl, {
         method: "POST",
         cache: "no-store",
       });
