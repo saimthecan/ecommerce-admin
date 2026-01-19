@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import {
   fetchProducts,

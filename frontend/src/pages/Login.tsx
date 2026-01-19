@@ -1,5 +1,5 @@
 // src/pages/Login.tsx
-import { FormEvent, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import {
