@@ -105,6 +105,3 @@ python -m pytest tests/ -v
 ## Varsayılan Kullanıcı
 - Email: `admin@example.com`
 - Password: `admin123`
-
-## Lisans
-MIT
