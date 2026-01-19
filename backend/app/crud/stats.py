@@ -1,9 +1,10 @@
-# app/crud/stats.py
+﻿# app/crud/stats.py
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.models.product import Product
+from app.models.order import Order
 
 
 async def get_overview_stats(db: AsyncSession) -> dict:
@@ -19,10 +20,21 @@ async def get_overview_stats(db: AsyncSession) -> dict:
     )
     active_products = products_q.scalar_one() or 0
 
-    # Şimdilik sipariş ve ciro yok => 0
+    # Toplam sipariş sayısı
+    orders_q = await db.execute(select(func.count()).select_from(Order))
+    total_orders = orders_q.scalar_one() or 0
+
+    # İptal edilenler hariç toplam ciro
+    revenue_q = await db.execute(
+        select(func.coalesce(func.sum(Order.total_amount), 0))
+        .select_from(Order)
+        .where(Order.status != "cancelled")
+    )
+    total_revenue = float(revenue_q.scalar_one() or 0)
+
     return {
-        "total_revenue": 0.0,
-        "total_orders": 0,
+        "total_revenue": total_revenue,
+        "total_orders": total_orders,
         "active_users": active_users,
         "active_products": active_products,
     }

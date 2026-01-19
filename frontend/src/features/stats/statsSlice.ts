@@ -1,4 +1,4 @@
-// src/features/stats/statsSlice.ts
+﻿// src/features/stats/statsSlice.ts
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { RootState } from "../../app/store";
 import { apiClient } from "../../api/client";

@@ -1,4 +1,4 @@
-// src/pages/Overview.tsx
+﻿// src/pages/Overview.tsx
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { selectCurrentUser } from "../features/auth/authSlice";
@@ -72,7 +72,7 @@ const Overview = () => {
             {formatCurrency(stats?.total_revenue)}
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            Sipariş sistemi eklendiğinde otomatik güncellenecek.
+            İptal edilen siparişler hariç hesaplanır.
           </p>
         </div>
 
