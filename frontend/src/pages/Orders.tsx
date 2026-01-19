@@ -35,6 +35,8 @@ const Orders = () => {
     const [quantity, setQuantity] = useState<string>("1");
     const [selectedUserId, setSelectedUserId] = useState<string>("");
     const [formError, setFormError] = useState<string | null>(null);
+    const [isCreating, setIsCreating] = useState(false);
+    const [updatingIds, setUpdatingIds] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         if (status === "idle" && currentUser) {
@@ -59,13 +61,13 @@ const Orders = () => {
         setFormError(null);
 
         if (!selectedProductId) {
-            setFormError("Lütfen bir ürün seçin.");
+            setFormError("Lutfen bir urun secin.");
             return;
         }
 
         const qty = parseInt(quantity, 10);
         if (Number.isNaN(qty) || qty <= 0) {
-            setFormError("Geçerli bir adet girin.");
+            setFormError("Gecerli bir adet girin.");
             return;
         }
 
@@ -77,16 +79,30 @@ const Orders = () => {
             payload.user_id = selectedUserId;
         }
 
-        const result = await dispatch(createOrder(payload));
-        if (createOrder.fulfilled.match(result)) {
-            setSelectedProductId("");
-            setQuantity("1");
-            setSelectedUserId("");
+        setIsCreating(true);
+        try {
+            const result = await dispatch(createOrder(payload));
+            if (createOrder.fulfilled.match(result)) {
+                setSelectedProductId("");
+                setQuantity("1");
+                setSelectedUserId("");
+            }
+        } finally {
+            setIsCreating(false);
         }
     };
-
-    const handleStatusChange = (order: Order, newStatus: string) => {
-        dispatch(updateOrderStatus({ id: order.id, status: newStatus }));
+    const handleStatusChange = async (order: Order, newStatus: string) => {
+        if (updatingIds[order.id]) return;
+        setUpdatingIds((prev) => ({ ...prev, [order.id]: true }));
+        try {
+            await dispatch(updateOrderStatus({ id: order.id, status: newStatus }));
+        } finally {
+            setUpdatingIds((prev) => {
+                const next = { ...prev };
+                delete next[order.id];
+                return next;
+            });
+        }
     };
 
     const formatDate = (dateStr: string) => {
@@ -196,10 +212,10 @@ const Orders = () => {
                     <div>
                         <button
                             type="submit"
-                            disabled={status === "loading"}
+                            disabled={isCreating}
                             className="w-full inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
                         >
-                            {status === "loading" ? "..." : "Sipariş Ver"}
+                            {isCreating ? "Kaydediliyor..." : "Siparis Ver"}
                         </button>
                     </div>
                 </form>
@@ -278,8 +294,11 @@ const Orders = () => {
                                     </td>
                                     {isAdmin && (
                                         <td className="px-4 py-2">
+                                            <div className="flex items-center gap-2">
                                             <select
-                                                className="rounded-md border border-slate-300 px-2 py-1 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                className="rounded-md border border-slate-300 px-2 py-1 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                disabled={updatingIds[order.id]}
+                                                aria-busy={updatingIds[order.id]}
                                                 value={order.status}
                                                 onChange={(e) =>
                                                     handleStatusChange(order, e.target.value)
@@ -291,6 +310,10 @@ const Orders = () => {
                                                     </option>
                                                 ))}
                                             </select>
+                                                {updatingIds[order.id] && (
+                                                    <span className="text-[10px] text-slate-400">...</span>
+                                                )}
+                                            </div>
                                         </td>
                                     )}
                                 </tr>

@@ -35,7 +35,7 @@ Tam kapsamlı e-ticaret yönetim paneli. React + FastAPI + PostgreSQL (Neon).
 cd backend
 python -m venv venv
 source venv/bin/activate  # Windows: source venv\Scripts\activate
-source venv/bin/activate
+source venv/Scripts/activate
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload
 python -m uvicorn app.main:app --reload

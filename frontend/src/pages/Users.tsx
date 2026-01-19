@@ -21,6 +21,8 @@ const Users = () => {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [updatingIds, setUpdatingIds] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (status === "idle" && currentUser?.is_superuser) {
@@ -32,37 +34,62 @@ const Users = () => {
     e.preventDefault();
     if (!email || !password) return;
 
-    const result = await dispatch(
-      createUser({
-        email,
-        full_name: fullName || null,
-        password,
-      })
-    );
+    setIsCreating(true);
+    try {
+      const result = await dispatch(
+        createUser({
+          email,
+          full_name: fullName || null,
+          password,
+        })
+      );
 
-    if (createUser.fulfilled.match(result)) {
-      setEmail("");
-      setFullName("");
-      setPassword("");
+      if (createUser.fulfilled.match(result)) {
+        setEmail("");
+        setFullName("");
+        setPassword("");
+      }
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleToggleActive = (user: User) => {
-    dispatch(
-      updateUser({
-        id: user.id,
-        is_active: !user.is_active,
-      })
-    );
+  const handleToggleActive = async (user: User) => {
+    if (updatingIds[user.id]) return;
+    setUpdatingIds((prev) => ({ ...prev, [user.id]: true }));
+    try {
+      await dispatch(
+        updateUser({
+          id: user.id,
+          is_active: !user.is_active,
+        })
+      );
+    } finally {
+      setUpdatingIds((prev) => {
+        const next = { ...prev };
+        delete next[user.id];
+        return next;
+      });
+    }
   };
 
-  const handleToggleAdmin = (user: User) => {
-    dispatch(
-      updateUser({
-        id: user.id,
-        is_superuser: !user.is_superuser,
-      })
-    );
+  const handleToggleAdmin = async (user: User) => {
+    if (updatingIds[user.id]) return;
+    setUpdatingIds((prev) => ({ ...prev, [user.id]: true }));
+    try {
+      await dispatch(
+        updateUser({
+          id: user.id,
+          is_superuser: !user.is_superuser,
+        })
+      );
+    } finally {
+      setUpdatingIds((prev) => {
+        const next = { ...prev };
+        delete next[user.id];
+        return next;
+      });
+    }
   };
 
   // 🔒 Admin değilse erken return
@@ -135,10 +162,10 @@ const Users = () => {
           <div>
             <button
               type="submit"
-              disabled={status === "loading"}
+              disabled={isCreating}
               className="inline-flex w-full md:w-auto items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
             >
-              {status === "loading" ? "Kaydediliyor..." : "Kullanıcı Oluştur"}
+              {isCreating ? "Kaydediliyor..." : "Kullanıcı Oluştur"}
             </button>
           </div>
         </form>
@@ -182,26 +209,28 @@ const Users = () => {
                     <button
                       type="button"
                       onClick={() => handleToggleActive(u)}
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      disabled={updatingIds[u.id]}
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium disabled:opacity-60 disabled:cursor-not-allowed ${
                         u.is_active
                           ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                           : "bg-slate-100 text-slate-500 border border-slate-200"
                       }`}
                     >
-                      {u.is_active ? "Aktif" : "Pasif"}
+                      {updatingIds[u.id] ? "..." : u.is_active ? "Aktif" : "Pasif"}
                     </button>
                   </td>
                   <td className="px-4 py-2 text-center">
                     <button
                       type="button"
                       onClick={() => handleToggleAdmin(u)}
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      disabled={updatingIds[u.id]}
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium disabled:opacity-60 disabled:cursor-not-allowed ${
                         u.is_superuser
                           ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
                           : "bg-slate-100 text-slate-500 border border-slate-200"
                       }`}
                     >
-                      {u.is_superuser ? "Admin" : "Normal"}
+                      {updatingIds[u.id] ? "..." : u.is_superuser ? "Admin" : "Normal"}
                     </button>
                   </td>
                   <td className="px-4 py-2 text-xs text-slate-500">

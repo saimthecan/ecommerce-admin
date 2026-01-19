@@ -25,6 +25,9 @@ const Categories = () => {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [updatingIds, setUpdatingIds] = useState<Record<string, boolean>>({});
+  const [deletingIds, setDeletingIds] = useState<Record<string, boolean>>({});
 
   // Sayfa açılınca kategorileri çek
   useEffect(() => {
@@ -47,45 +50,70 @@ const Categories = () => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    const result = await dispatch(
-      createCategory({
-        name: name.trim(),
-        description: description.trim() || null,
-      })
-    );
+    setIsCreating(true);
+    try {
+      const result = await dispatch(
+        createCategory({
+          name: name.trim(),
+          description: description.trim() || null,
+        })
+      );
 
-    if (createCategory.fulfilled.match(result)) {
-      setName("");
-      setDescription("");
+      if (createCategory.fulfilled.match(result)) {
+        setName("");
+        setDescription("");
+      }
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleEdit = (cat: Category) => {
-    const newName = window.prompt("Yeni kategori adı:", cat.name);
+  const handleEdit = async (cat: Category) => {
+    if (updatingIds[cat.id] || deletingIds[cat.id]) return;
+    const newName = window.prompt("Yeni kategori adi:", cat.name);
     if (newName === null) return;
     const trimmedName = newName.trim();
     if (!trimmedName) return;
 
     const newDesc = window.prompt(
-      "Yeni açıklama (boş bırakabilirsin):",
+      "Yeni aciklama (bos birakabilirsin):",
       cat.description ?? ""
     );
     const trimmedDesc = newDesc?.trim() || null;
 
-    dispatch(
-      updateCategory({
-        id: cat.id,
-        name: trimmedName,
-        description: trimmedDesc,
-      })
-    );
+    setUpdatingIds((prev) => ({ ...prev, [cat.id]: true }));
+    try {
+      await dispatch(
+        updateCategory({
+          id: cat.id,
+          name: trimmedName,
+          description: trimmedDesc,
+        })
+      );
+    } finally {
+      setUpdatingIds((prev) => {
+        const next = { ...prev };
+        delete next[cat.id];
+        return next;
+      });
+    }
   };
 
-  const handleDelete = (cat: Category) => {
+  const handleDelete = async (cat: Category) => {
     if (!window.confirm(`"${cat.name}" kategorisini silmek istiyor musun?`)) {
       return;
     }
-    dispatch(deleteCategory(cat.id));
+    if (deletingIds[cat.id]) return;
+    setDeletingIds((prev) => ({ ...prev, [cat.id]: true }));
+    try {
+      await dispatch(deleteCategory(cat.id));
+    } finally {
+      setDeletingIds((prev) => {
+        const next = { ...prev };
+        delete next[cat.id];
+        return next;
+      });
+    }
   };
 
   return (
@@ -135,10 +163,10 @@ const Categories = () => {
           <div className="md:col-span-1 flex justify-end">
             <button
               type="submit"
-              disabled={status === "loading"}
+              disabled={isCreating}
               className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
             >
-              {status === "loading" ? "Kaydediliyor..." : "Kategori Oluştur"}
+              {isCreating ? "Kaydediliyor..." : "Kategori Oluştur"}
             </button>
           </div>
         </form>
@@ -185,16 +213,18 @@ const Categories = () => {
                     <button
                       type="button"
                       onClick={() => handleEdit(c)}
-                      className="px-3 py-1 text-xs rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      disabled={updatingIds[c.id] || deletingIds[c.id]}
+                      className="px-3 py-1 text-xs rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Düzenle
+                      {updatingIds[c.id] ? "..." : "Duzenle"}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(c)}
-                      className="px-3 py-1 text-xs rounded-md bg-red-500 text-white hover:bg-red-600"
+                      disabled={deletingIds[c.id]}
+                      className="px-3 py-1 text-xs rounded-md bg-red-500 text-white hover:bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Sil
+                      {deletingIds[c.id] ? "Siliniyor..." : "Sil"}
                     </button>
                   </td>
                 </tr>

@@ -29,6 +29,9 @@ const Products = () => {
   const [stock, setStock] = useState<string>("0");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [updatingIds, setUpdatingIds] = useState<Record<string, boolean>>({});
+  const [deletingIds, setDeletingIds] = useState<Record<string, boolean>>({});
 
   // Sayfa açılınca ürünleri çek
   useEffect(() => {
@@ -47,41 +50,66 @@ const Products = () => {
     e.preventDefault();
     if (!name) return;
 
-    const parsedPrice = Number(price);
-    const parsedStock = Number(stock);
+    setIsCreating(true);
+    try {
+      const parsedPrice = Number(price);
+      const parsedStock = Number(stock);
 
-    const result = await dispatch(
-      createProduct({
-        name,
-        description: description || null,
-        price: parsedPrice,
-        stock: parsedStock,
-        is_active: true,
-        category_id: categoryId || null,
-      })
-    );
+      const result = await dispatch(
+        createProduct({
+          name,
+          description: description || null,
+          price: parsedPrice,
+          stock: parsedStock,
+          is_active: true,
+          category_id: categoryId || null,
+        })
+      );
 
-    if (createProduct.fulfilled.match(result)) {
-      setName("");
-      setPrice("0");
-      setStock("0");
-      setDescription("");
-      setCategoryId("");
+      if (createProduct.fulfilled.match(result)) {
+        setName("");
+        setPrice("0");
+        setStock("0");
+        setDescription("");
+        setCategoryId("");
+      }
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleToggleActive = (p: Product) => {
-    dispatch(
-      updateProduct({
-        id: p.id,
-        is_active: !p.is_active,
-      })
-    );
+  const handleToggleActive = async (p: Product) => {
+    if (updatingIds[p.id] || deletingIds[p.id]) return;
+    setUpdatingIds((prev) => ({ ...prev, [p.id]: true }));
+    try {
+      await dispatch(
+        updateProduct({
+          id: p.id,
+          is_active: !p.is_active,
+        })
+      );
+    } finally {
+      setUpdatingIds((prev) => {
+        const next = { ...prev };
+        delete next[p.id];
+        return next;
+      });
+    }
   };
 
-  const handleDelete = (p: Product) => {
-    if (!window.confirm(`"${p.name}" adlı ürünü silmek istiyor musun?`)) return;
-    dispatch(deleteProduct(p.id));
+  const handleDelete = async (p: Product) => {
+    if (!window.confirm(`"${p.name}" adli urunu silmek istiyor musun?`)) return;
+    if (deletingIds[p.id]) return;
+    setDeletingIds((prev) => ({ ...prev, [p.id]: true }));
+    try {
+      await dispatch(deleteProduct(p.id));
+    } finally {
+      setDeletingIds((prev) => {
+        const next = { ...prev };
+        delete next[p.id];
+        return next;
+      });
+    }
   };
 
   // Admin değilse sayfayı kilitle
@@ -196,10 +224,10 @@ const Products = () => {
           <div className="md:col-span-5 flex justify-end">
             <button
               type="submit"
-              disabled={status === "loading"}
+              disabled={isCreating}
               className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
             >
-              {status === "loading" ? "Kaydediliyor..." : "Ürün Oluştur"}
+              {isCreating ? "Kaydediliyor..." : "Ürün Oluştur"}
             </button>
           </div>
         </form>
@@ -248,13 +276,14 @@ const Products = () => {
                     <button
                       type="button"
                       onClick={() => handleToggleActive(p)}
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      disabled={updatingIds[p.id] || deletingIds[p.id]}
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium disabled:opacity-60 disabled:cursor-not-allowed ${
                         p.is_active
                           ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                           : "bg-slate-100 text-slate-500 border border-slate-200"
                       }`}
                     >
-                      {p.is_active ? "Aktif" : "Pasif"}
+                      {updatingIds[p.id] ? "..." : p.is_active ? "Aktif" : "Pasif"}
                     </button>
                   </td>
                   <td className="px-4 py-2 text-xs text-slate-600">
@@ -265,9 +294,10 @@ const Products = () => {
                     <button
                       type="button"
                       onClick={() => handleDelete(p)}
-                      className="px-3 py-1 text-xs rounded-md bg-red-500 text-white hover:bg-red-600"
+                      disabled={deletingIds[p.id]}
+                      className="px-3 py-1 text-xs rounded-md bg-red-500 text-white hover:bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Sil
+                      {deletingIds[p.id] ? "Siliniyor..." : "Sil"}
                     </button>
                   </td>
 

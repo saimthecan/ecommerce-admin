@@ -2,9 +2,11 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db_session, get_current_active_admin, get_current_active_user
+from app.models.order import OrderItem
 from app.crud.product import (
     get_product,
     get_products,
@@ -92,6 +94,15 @@ async def delete_product_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found",
+        )
+
+    result = await db.execute(
+        select(OrderItem.id).where(OrderItem.product_id == product_id).limit(1)
+    )
+    if result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Product has orders. Deactivate instead of deleting.",
         )
 
     await delete_product(db, db_product)
