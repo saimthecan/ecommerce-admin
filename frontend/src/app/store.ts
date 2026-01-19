@@ -5,6 +5,9 @@ import productsReducer from "../features/products/productsSlice";
 import statsReducer from "../features/stats/statsSlice";
 import categoriesReducer from "../features/categories/categoriesSlice";
 import ordersReducer from "../features/orders/ordersSlice";
+import inventoryReducer from "../features/inventory/inventorySlice";
+import reportsReducer from "../features/reports/reportsSlice";
+import addressesReducer from "../features/addresses/addressesSlice";
 
 
 export const store = configureStore({
@@ -15,6 +18,9 @@ export const store = configureStore({
     stats: statsReducer,
     categories: categoriesReducer,
     orders: ordersReducer,
+    inventory: inventoryReducer,
+    reports: reportsReducer,
+    addresses: addressesReducer,
   },
 });
 

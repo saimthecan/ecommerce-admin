@@ -5,6 +5,8 @@ import Users from "./pages/Users";
 import Products from "./pages/Products";
 import Categories from "./pages/Categories";
 import Orders from "./pages/Orders";
+import Inventory from "./pages/Inventory";
+import Reports from "./pages/Reports";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
 import AdminLayout from "./layouts/AdminLayout";
@@ -23,6 +25,8 @@ function App() {
           <Route path="/products" element={<Products />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/reports" element={<Reports />} />
         </Route>
       </Route>
 

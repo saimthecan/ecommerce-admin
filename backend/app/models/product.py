@@ -58,3 +58,8 @@ class Product(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    # Relationships
+    variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
+    images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
+    inventory_movements = relationship("InventoryMovement", back_populates="product")

@@ -36,7 +36,7 @@ class Order(Base):
     status = Column(
         String(20),
         nullable=False,
-        default="pending",  # pending / paid / cancelled
+        default="pending",  # pending / paid / cancelled / shipped / delivered / refunded
     )
 
     total_amount = Column(
@@ -44,6 +44,17 @@ class Order(Base):
         nullable=False,
         default=0,
     )
+
+    # Shipping information
+    shipping_address_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("addresses.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    tracking_number = Column(String(100), nullable=True)
+    carrier = Column(String(100), nullable=True)  # Kargo firması
+    shipped_at = Column(DateTime(timezone=True), nullable=True)
+    delivered_at = Column(DateTime(timezone=True), nullable=True)
 
     created_at = Column(
         DateTime(timezone=True),
@@ -57,12 +68,18 @@ class Order(Base):
         nullable=False,
     )
 
+    # Relationships
     user = relationship("User", backref="orders")
     items = relationship(
         "OrderItem",
         back_populates="order",
         cascade="all, delete-orphan",
     )
+    shipping_address = relationship("Address")
+    events = relationship("OrderEvent", back_populates="order", cascade="all, delete-orphan")
+    payments = relationship("Payment", back_populates="order", cascade="all, delete-orphan")
+    refunds = relationship("Refund", back_populates="order", cascade="all, delete-orphan")
+    inventory_movements = relationship("InventoryMovement", back_populates="order")
 
 
 class OrderItem(Base):
@@ -87,6 +104,12 @@ class OrderItem(Base):
         nullable=False,
     )
 
+    variant_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("product_variants.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     quantity = Column(Integer, nullable=False, default=1)
     unit_price = Column(Numeric(10, 2), nullable=False, default=0)
     line_total = Column(Numeric(10, 2), nullable=False, default=0)
@@ -99,3 +122,4 @@ class OrderItem(Base):
 
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
+    variant = relationship("ProductVariant")

@@ -40,4 +40,13 @@ class Settings(BaseSettings):
     # Database – Supabase bağlantısı
     DATABASE_URL: str
 
+    # Stripe Payment Integration
+    STRIPE_SECRET_KEY: Optional[str] = None
+    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    STRIPE_PUBLISHABLE_KEY: Optional[str] = None
+
+    # File Upload
+    CLOUDINARY_URL: Optional[str] = None
+    UPLOAD_DIR: str = "uploads"
+
 settings = Settings()

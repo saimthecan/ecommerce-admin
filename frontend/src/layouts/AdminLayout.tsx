@@ -84,6 +84,30 @@ const AdminLayout = () => {
           >
             Siparişler
           </NavLink>
+
+          <NavLink
+            to="/inventory"
+            className={({ isActive }) =>
+              `block rounded-md px-3 py-2 ${isActive
+                ? "bg-slate-800 text-white"
+                : "text-slate-200 hover:bg-slate-800/60"
+              }`
+            }
+          >
+            Envanter
+          </NavLink>
+
+          <NavLink
+            to="/reports"
+            className={({ isActive }) =>
+              `block rounded-md px-3 py-2 ${isActive
+                ? "bg-slate-800 text-white"
+                : "text-slate-200 hover:bg-slate-800/60"
+              }`
+            }
+          >
+            Raporlar
+          </NavLink>
         </nav>
 
 
