@@ -1,13 +1,14 @@
-from typing import List
+﻿from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db_session, get_current_active_admin
+from app.api.deps import get_db_session, get_current_active_admin, get_current_active_user
 from app.crud.product import (
     get_product,
     get_products,
+    get_active_products,
     create_product,
     update_product,
     delete_product,
@@ -23,9 +24,12 @@ async def list_products(
     skip: int = 0,
     limit: int = 50,
     db: AsyncSession = Depends(get_db_session),
-    current_user: ProductModel = Depends(get_current_active_admin),
+    current_user = Depends(get_current_active_user),  # Tüm auth'lu kullanıcılar görebilir.
 ):
-    products = await get_products(db, skip=skip, limit=limit)
+    if current_user.is_superuser:
+        products = await get_products(db, skip=skip, limit=limit)
+    else:
+        products = await get_active_products(db, skip=skip, limit=limit)
     return products
 
 
@@ -43,10 +47,15 @@ async def create_product_endpoint(
 async def get_product_by_id(
     product_id: UUID,
     db: AsyncSession = Depends(get_db_session),
-    current_user: ProductModel = Depends(get_current_active_admin),
+    current_user = Depends(get_current_active_user),  # Tüm auth'lu kullanıcılar görebilir.
 ):
     product = await get_product(db, product_id)
     if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found",
+        )
+    if not current_user.is_superuser and not product.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found",

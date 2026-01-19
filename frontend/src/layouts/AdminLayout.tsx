@@ -1,7 +1,8 @@
-// src/layouts/AdminLayout.tsx
+﻿// src/layouts/AdminLayout.tsx
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { clearAuth, selectCurrentUser } from "../features/auth/authSlice";
+import { clearOrdersState } from "../features/orders/ordersSlice";
 
 const AdminLayout = () => {
   const dispatch = useAppDispatch();
@@ -9,6 +10,7 @@ const AdminLayout = () => {
   const user = useAppSelector(selectCurrentUser);
 
   const handleLogout = () => {
+    dispatch(clearOrdersState());
     dispatch(clearAuth());
     navigate("/login");
   };
@@ -25,10 +27,9 @@ const AdminLayout = () => {
           <NavLink
             to="/overview"
             className={({ isActive }) =>
-              `block rounded-md px-3 py-2 ${
-                isActive
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-200 hover:bg-slate-800/60"
+              `block rounded-md px-3 py-2 ${isActive
+                ? "bg-slate-800 text-white"
+                : "text-slate-200 hover:bg-slate-800/60"
               }`
             }
           >
@@ -38,10 +39,9 @@ const AdminLayout = () => {
           <NavLink
             to="/users"
             className={({ isActive }) =>
-              `block rounded-md px-3 py-2 ${
-                isActive
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-200 hover:bg-slate-800/60"
+              `block rounded-md px-3 py-2 ${isActive
+                ? "bg-slate-800 text-white"
+                : "text-slate-200 hover:bg-slate-800/60"
               }`
             }
           >
@@ -51,28 +51,38 @@ const AdminLayout = () => {
           <NavLink
             to="/products"
             className={({ isActive }) =>
-              `block rounded-md px-3 py-2 ${
-                isActive
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-200 hover:bg-slate-800/60"
+              `block rounded-md px-3 py-2 ${isActive
+                ? "bg-slate-800 text-white"
+                : "text-slate-200 hover:bg-slate-800/60"
               }`
             }
           >
             Ürünler
           </NavLink>
 
-          
-        <NavLink
+
+          <NavLink
             to="/categories"
             className={({ isActive }) =>
-              `block rounded-md px-3 py-2 ${
-                isActive
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-200 hover:bg-slate-800/60"
+              `block rounded-md px-3 py-2 ${isActive
+                ? "bg-slate-800 text-white"
+                : "text-slate-200 hover:bg-slate-800/60"
               }`
             }
           >
             Kategoriler
+          </NavLink>
+
+          <NavLink
+            to="/orders"
+            className={({ isActive }) =>
+              `block rounded-md px-3 py-2 ${isActive
+                ? "bg-slate-800 text-white"
+                : "text-slate-200 hover:bg-slate-800/60"
+              }`
+            }
+          >
+            Siparişler
           </NavLink>
         </nav>
 

@@ -1,4 +1,4 @@
-from decimal import Decimal
+﻿from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import select
@@ -22,6 +22,20 @@ async def get_orders(db: AsyncSession, skip: int = 0, limit: int = 50):
     return result.scalars().unique().all()
 
 
+async def get_orders_by_user(db: AsyncSession, user_id: UUID, skip: int = 0, limit: int = 50):
+    """Non-admin kullanıcı için sadece kendi siparişlerini getir."""
+    stmt = (
+        select(Order)
+        .where(Order.user_id == user_id)
+        .options(selectinload(Order.items))
+        .order_by(Order.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().unique().all()
+
+
 async def get_order(db: AsyncSession, order_id: UUID):
     stmt = (
         select(Order)
@@ -32,15 +46,19 @@ async def get_order(db: AsyncSession, order_id: UUID):
     return result.scalar_one_or_none()
 
 
-async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
+async def create_order(
+    db: AsyncSession,
+    data: OrderCreate,
+    enforce_active: bool = True,
+) -> Order:
     """
-    items içindeki product_id’leri product tablosundan bulur,
+    items içindeki product_id'leri product tablosundan bulur,
     product.price'i unit_price olarak kullanır, line_total ve total_amount hesaplar.
     """
     if not data.items:
         raise ValueError("Sipariş için en az bir ürün gerekli.")
 
-    # Ürünleri tek tek çekip hesap yapalım
+    # Ürünleri tek tek çekip hesap yapalım.
     total_amount = Decimal("0")
     order_items: list[OrderItem] = []
 
@@ -51,15 +69,16 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
 
         if not product:
             raise ValueError(f"Ürün bulunamadı: {item.product_id}")
+        if enforce_active and not product.is_active:
+            raise ValueError("Ürün aktif değil.")
 
         unit_price = Decimal(product.price)  # Numeric -> Decimal
         quantity = item.quantity
         if quantity <= 0:
-            raise ValueError("Miktar 0’dan büyük olmalı.")
+            raise ValueError("Miktar 0'dan büyük olmalı.")
 
         line_total = unit_price * quantity
         total_amount += line_total
-        
 
         order_items.append(
             OrderItem(
@@ -69,7 +88,7 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
                 line_total=line_total,
             )
         )
-        
+
     order = Order(
         user_id=data.user_id,
         status=data.status,
@@ -83,8 +102,12 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
         db.add(oi)
 
     await db.commit()
-    await db.refresh(order)
-    return order
+    result = await db.execute(
+        select(Order)
+        .where(Order.id == order.id)
+        .options(selectinload(Order.items))
+    )
+    return result.scalar_one()
 
 
 async def update_order_status(

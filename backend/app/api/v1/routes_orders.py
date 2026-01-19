@@ -1,4 +1,4 @@
-from typing import List
+﻿from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,10 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db_session, get_current_active_user
 from app.crud.order import (
     get_orders,
+    get_orders_by_user,
     get_order,
     create_order,
     update_order_status,
 )
+from app.crud.user import get_user
 from app.models.user import User as UserModel
 from app.schemas.order import OrderOut, OrderCreate, OrderUpdateStatus
 
@@ -32,9 +34,12 @@ async def list_orders(
     db: AsyncSession = Depends(get_db_session),
     current_user: UserModel = Depends(get_current_active_user),
 ):
-    # Şimdilik sadece admin listeleyebilsin
-    ensure_admin(current_user)
-    orders = await get_orders(db, skip=skip, limit=limit)
+    # Admin: tüm siparişleri görsün
+    # Non-admin: sadece kendi siparişlerini
+    if current_user.is_superuser:
+        orders = await get_orders(db, skip=skip, limit=limit)
+    else:
+        orders = await get_orders_by_user(db, current_user.id, skip=skip, limit=limit)
     return orders
 
 
@@ -44,12 +49,17 @@ async def get_order_by_id(
     db: AsyncSession = Depends(get_db_session),
     current_user: UserModel = Depends(get_current_active_user),
 ):
-    ensure_admin(current_user)
     order = await get_order(db, order_id)
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Sipariş bulunamadı.",
+        )
+    # Non-admin sadece kendi siparişini görebilir
+    if not current_user.is_superuser and order.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bu siparişi görüntüleme yetkiniz yok.",
         )
     return order
 
@@ -60,14 +70,28 @@ async def create_order_endpoint(
     db: AsyncSession = Depends(get_db_session),
     current_user: UserModel = Depends(get_current_active_user),
 ):
-    ensure_admin(current_user)
-
-    # user_id gönderilmemişse, mevcut kullanıcıyı ata (opsiyonel tercih)
-    if body.user_id is None:
+    # Non-admin: body.user_id + status IGNORE, kendi ID'si + pending
+    # Admin: body.user_id verilmişse onu kullan, yoksa kendi ID'si
+    if current_user.is_superuser:
+        if body.user_id is None:
+            body.user_id = current_user.id
+        else:
+            target_user = await get_user(db, body.user_id)
+            if not target_user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Kullanıcı bulunamadı.",
+                )
+    else:
         body.user_id = current_user.id
+        body.status = "pending"
 
     try:
-        order = await create_order(db, body)
+        order = await create_order(
+            db,
+            body,
+            enforce_active=not current_user.is_superuser,
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

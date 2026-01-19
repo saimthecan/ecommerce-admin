@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -37,7 +37,7 @@ class OrderItemOut(OrderItemInDBBase):
 
 
 class OrderBase(BaseModel):
-    status: str = "pending"  # şimdilik string, istersen enum’a çekebiliriz
+    status: str = "pending"  # Şimdilik string, istersen enum'a çekebiliriz.
 
 
 class OrderCreate(OrderBase):
@@ -45,7 +45,7 @@ class OrderCreate(OrderBase):
     Admin panelde sipariş oluştururken:
     - user_id: opsiyonel (admin başka kullanıcı adına sipariş açabilir)
     - items: product_id + quantity
-    unit_price ve line_total backend’de hesaplanacak.
+    unit_price ve line_total backend'de hesaplanacak.
     """
 
     user_id: UUID | None = None

@@ -22,6 +22,21 @@ async def get_products(
     return result.scalars().all()
 
 
+async def get_active_products(
+    db: AsyncSession,
+    skip: int = 0,
+    limit: int = 50,
+) -> Sequence[Product]:
+    stmt = (
+        select(Product)
+        .where(Product.is_active.is_(True))
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
 async def create_product(db: AsyncSession, product_in: ProductCreate) -> Product:
     obj = Product(
         name=product_in.name,
