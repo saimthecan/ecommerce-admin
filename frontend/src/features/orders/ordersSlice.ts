@@ -3,6 +3,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { AxiosError } from "axios";
 import { apiClient } from "../../api/client";
 import type { RootState } from "../../app/store";
+import { fetchOverviewStats } from "../stats/statsSlice";
 
 export type OrderItem = {
     id: string;
@@ -63,9 +64,10 @@ export const createOrder = createAsyncThunk<
     Order,
     CreateOrderPayload,
     { rejectValue: string }
->("orders/createOrder", async (data, { rejectWithValue }) => {
+>("orders/createOrder", async (data, { rejectWithValue, dispatch }) => {
     try {
         const res = await apiClient.post<Order>("/orders", data);
+        dispatch(fetchOverviewStats());
         return res.data;
     } catch (err) {
         const error = err as AxiosError<{ detail?: string }>;
@@ -86,9 +88,10 @@ export const updateOrderStatus = createAsyncThunk<
     Order,
     UpdateOrderStatusPayload,
     { rejectValue: string }
->("orders/updateOrderStatus", async ({ id, status }, { rejectWithValue }) => {
+>("orders/updateOrderStatus", async ({ id, status }, { rejectWithValue, dispatch }) => {
     try {
         const res = await apiClient.put<Order>(`/orders/${id}/status`, { status });
+        dispatch(fetchOverviewStats());
         return res.data;
     } catch (err) {
         const error = err as AxiosError<{ detail?: string }>;

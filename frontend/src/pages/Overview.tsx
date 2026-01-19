@@ -9,6 +9,14 @@ import {
   selectOverviewError,
 } from "../features/stats/statsSlice";
 
+const STATUS_LABELS: { key: string; label: string }[] = [
+  { key: "paid", label: "Paid" },
+  { key: "pending", label: "Pending" },
+  { key: "cancelled", label: "Cancelled" },
+  { key: "shipped", label: "Shipped" },
+  { key: "delivered", label: "Delivered" },
+];
+
 const Overview = () => {
   const dispatch = useAppDispatch();
 
@@ -18,10 +26,8 @@ const Overview = () => {
   const statsError = useAppSelector(selectOverviewError);
 
   useEffect(() => {
-    if (statsStatus === "idle") {
-      dispatch(fetchOverviewStats());
-    }
-  }, [statsStatus, dispatch]);
+    dispatch(fetchOverviewStats());
+  }, [dispatch]);
 
   const formatCurrency = (value: number | undefined) =>
     (value ?? 0).toLocaleString("tr-TR", {
@@ -30,9 +36,10 @@ const Overview = () => {
       maximumFractionDigits: 2,
     });
 
+  const ordersByStatus = stats?.orders_by_status ?? {};
+
   return (
     <div className="space-y-4">
-      {/* Başlık */}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
           Overview
@@ -42,7 +49,6 @@ const Overview = () => {
         </p>
       </div>
 
-      {/* Giriş yapan kullanıcı alanı */}
       <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-800 px-4 py-3 text-sm text-slate-100 shadow-sm sm:flex-row sm:items-center">
         <div>
           <p className="text-xs uppercase tracking-wide text-slate-400">
@@ -54,16 +60,13 @@ const Overview = () => {
         </div>
       </div>
 
-      {/* Hata mesajı */}
       {statsError && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           İstatistikler yüklenirken hata: {statsError}
         </div>
       )}
 
-      {/* Kartlar */}
       <div className="grid gap-4 md:grid-cols-3">
-        {/* Toplam Ciro */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Toplam Ciro
@@ -72,11 +75,10 @@ const Overview = () => {
             {formatCurrency(stats?.total_revenue)}
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            İptal edilen siparişler hariç hesaplanır.
+            Ödendi/Kargoda/Teslim edildi siparişlerden hesaplanır.
           </p>
         </div>
 
-        {/* Toplam Sipariş */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Toplam Sipariş
@@ -89,7 +91,6 @@ const Overview = () => {
           )}
         </div>
 
-        {/* Aktif Kullanıcılar */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Aktif Kullanıcılar
@@ -100,6 +101,29 @@ const Overview = () => {
           <p className="mt-1 text-xs text-slate-400">
             Sadece <code>is_active = true</code> kullanıcılar sayılır.
           </p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-800">
+            Sipariş Durum Dağılımı
+          </h3>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {STATUS_LABELS.map((item) => (
+            <div
+              key={item.key}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+            >
+              <div className="text-xs uppercase tracking-wide text-slate-500">
+                {item.label}
+              </div>
+              <div className="mt-1 text-lg font-semibold text-slate-800">
+                {ordersByStatus[item.key] ?? 0}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

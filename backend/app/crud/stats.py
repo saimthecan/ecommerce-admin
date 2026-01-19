@@ -7,6 +7,10 @@ from app.models.product import Product
 from app.models.order import Order
 
 
+ORDER_STATUSES = ["pending", "paid", "cancelled", "shipped", "delivered"]
+REVENUE_STATUSES = ["paid", "shipped", "delivered"]
+
+
 async def get_overview_stats(db: AsyncSession) -> dict:
     # Aktif kullanıcı sayısı
     users_q = await db.execute(
@@ -24,11 +28,20 @@ async def get_overview_stats(db: AsyncSession) -> dict:
     orders_q = await db.execute(select(func.count()).select_from(Order))
     total_orders = orders_q.scalar_one() or 0
 
-    # İptal edilenler hariç toplam ciro
+    # Sipariş durumlarına göre adetler
+    status_counts = {status: 0 for status in ORDER_STATUSES}
+    status_q = await db.execute(
+        select(Order.status, func.count(Order.id)).group_by(Order.status)
+    )
+    for status, count in status_q.all():
+        if status in status_counts:
+            status_counts[status] = count
+
+    # Ciro: sadece paid/shipped/delivered
     revenue_q = await db.execute(
         select(func.coalesce(func.sum(Order.total_amount), 0))
         .select_from(Order)
-        .where(Order.status != "cancelled")
+        .where(Order.status.in_(REVENUE_STATUSES))
     )
     total_revenue = float(revenue_q.scalar_one() or 0)
 
@@ -37,4 +50,5 @@ async def get_overview_stats(db: AsyncSession) -> dict:
         "total_orders": total_orders,
         "active_users": active_users,
         "active_products": active_products,
+        "orders_by_status": status_counts,
     }

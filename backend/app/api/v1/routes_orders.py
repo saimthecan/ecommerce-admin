@@ -13,6 +13,7 @@ from app.crud.order import (
     update_order_status,
 )
 from app.crud.user import get_user
+from app.crud.address import get_address
 from app.models.user import User as UserModel
 from app.schemas.order import OrderOut, OrderCreate, OrderUpdateStatus
 
@@ -82,15 +83,36 @@ async def create_order_endpoint(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Kullanıcı bulunamadı.",
                 )
+        target_user_id = body.user_id
     else:
         body.user_id = current_user.id
+        target_user_id = current_user.id
         body.status = "pending"
+
+    if body.shipping_address_id:
+        address = await get_address(db, body.shipping_address_id)
+        if not address:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Adres bulunamadı.",
+            )
+        if not current_user.is_superuser and address.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Bu adrese erişim yetkiniz yok.",
+            )
+        if target_user_id and address.user_id != target_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Adres bu kullanıcıya ait değil.",
+            )
 
     try:
         order = await create_order(
             db,
             body,
             enforce_active=not current_user.is_superuser,
+            actor_id=current_user.id,
         )
     except ValueError as e:
         raise HTTPException(
@@ -116,5 +138,5 @@ async def update_order_status_endpoint(
             detail="Sipariş bulunamadı.",
         )
 
-    updated = await update_order_status(db, db_obj, body)
+    updated = await update_order_status(db, db_obj, body, actor_id=current_user.id)
     return updated

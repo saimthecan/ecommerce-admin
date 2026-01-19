@@ -9,6 +9,7 @@ export type OverviewStats = {
   total_orders: number;
   active_users: number;
   active_products: number;
+  orders_by_status: Record<string, number>;
 };
 
 type Status = "idle" | "loading" | "succeeded" | "failed";
