@@ -34,8 +34,8 @@ async def test_stats_overview_returns_data(
     # Login as admin
     login_response = await client.post(
         "/api/v1/auth/login",
-        data={
-            "username": "admin_test@example.com",
+        json={
+            "email": "admin_test@example.com",
             "password": "admin123",
         },
     )
