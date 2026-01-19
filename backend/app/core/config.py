@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     ALGORITHM: str = "HS256"
 
+    # Warmup
+    INTERNAL_API_URL: Optional[str] = None
+    NEXT_PUBLIC_API_URL: Optional[str] = None
+    WARMUP_KEY: Optional[str] = None
+
     # Database – Supabase bağlantısı
     DATABASE_URL: str
 

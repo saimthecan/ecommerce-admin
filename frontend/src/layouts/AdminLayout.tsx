@@ -8,7 +8,6 @@ const AdminLayout = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector(selectCurrentUser);
-
   const handleLogout = () => {
     dispatch(clearOrdersState());
     dispatch(clearAuth());
@@ -108,6 +107,7 @@ const AdminLayout = () => {
           >
             Raporlar
           </NavLink>
+
         </nav>
 
 

@@ -1,5 +1,5 @@
-// src/pages/Login.tsx
-import { useState, type FormEvent } from "react";
+﻿// src/pages/Login.tsx
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import {
@@ -17,12 +17,67 @@ const Login = () => {
   const [email, setEmail] = useState("admin@example.com");
   const [password, setPassword] = useState("admin123");
 
+  const [warmingUp, setWarmingUp] = useState(false);
+  const [warmupError, setWarmupError] = useState<string | null>(null);
+  const [warmupSuccess, setWarmupSuccess] = useState(false);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     const resultAction = await dispatch(loginUser({ email, password }));
     if (loginUser.fulfilled.match(resultAction)) {
       navigate("/overview", { replace: true });
+    }
+  };
+
+  useEffect(() => {
+    if (!warmupSuccess) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setWarmupSuccess(false);
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [warmupSuccess]);
+
+  const handleWarmup = async () => {
+    if (warmingUp) {
+      return;
+    }
+
+    setWarmingUp(true);
+    setWarmupError(null);
+    setWarmupSuccess(false);
+
+    try {
+      const response = await fetch("/api/warmup", {
+        method: "POST",
+        cache: "no-store",
+      });
+      const contentType = response.headers.get("content-type") ?? "";
+      const bodyText = await response.text();
+
+      if (!response.ok) {
+        if (contentType.includes("application/json") && bodyText) {
+          try {
+            const parsed = JSON.parse(bodyText) as { error?: string };
+            if (parsed?.error) {
+              throw new Error(parsed.error);
+            }
+          } catch {
+            // ignore JSON parse errors and fall back to bodyText
+          }
+        }
+        throw new Error(bodyText || `HTTP ${response.status}`);
+      }
+
+      setWarmupSuccess(true);
+    } catch (error) {
+      setWarmupError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setWarmingUp(false);
     }
   };
 
@@ -94,6 +149,31 @@ const Login = () => {
           >
             {isLoading ? "Giriş yapılıyor..." : "Giriş Yap"}
           </button>
+          <button
+            type="button"
+            title="Render + Neon uyandırır"
+            onClick={handleWarmup}
+            disabled={warmingUp}
+            className={[
+              "w-full rounded-lg px-3 py-2 text-sm font-medium transition",
+              warmingUp
+                ? "bg-slate-800 text-slate-400 cursor-not-allowed"
+                : "bg-slate-800 text-slate-100 hover:bg-slate-700",
+            ].join(" ")}
+          >
+            {warmingUp ? "Uyandırılıyor…" : "Sistemi uyandır"}
+          </button>
+          {warmingUp && (
+            <p className="text-[11px] leading-snug text-slate-400">
+              Sistemin uyanması yaklaşık 1 dk sürebilir. Uyanmazsa butona tekrar basıp bir daha deneyin.
+            </p>
+          )}
+          {warmupSuccess && (
+            <p className="text-xs text-emerald-300">Sistem uyandı ✅</p>
+          )}
+          {warmupError && (
+            <p className="text-xs text-rose-300">{warmupError}</p>
+          )}
         </form>
       </div>
     </div>
